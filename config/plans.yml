@@ -1,0 +1,98 @@
+---
+# Kê khai các plan và entitlements. Sử dụng cùng key với config/features.yml
+# premium: true chỉ để tham khảo; bật/tắt thực tế dựa trên danh sách features.
+
+free:
+  display_name: Free
+  seats:
+    max: 2
+  features:
+    # Core
+    - inbound_emails
+    - channel_email
+    - help_center
+    - agent_bots
+    - macros
+    - agent_management
+    - team_management
+    - inbox_management
+    - labels
+    - custom_attributes
+    - automations
+  disabled_features:
+    - sla
+    - custom_roles
+    - audit_logs
+    - disable_branding
+    - captain_integration
+
+pro:
+  display_name: Pro
+  seats:
+    max: 25
+  features:
+    - inbound_emails
+    - channel_email
+    - help_center
+    - agent_bots
+    - macros
+    - agent_management
+    - team_management
+    - inbox_management
+    - labels
+    - custom_attributes
+    - automations
+    - sla
+    - custom_roles
+    - captain_integration
+  disabled_features:
+    - audit_logs
+    - disable_branding
+
+business:
+  display_name: Business
+  seats:
+    max: 100
+  features:
+    - inbound_emails
+    - channel_email
+    - help_center
+    - agent_bots
+    - macros
+    - agent_management
+    - team_management
+    - inbox_management
+    - labels
+    - custom_attributes
+    - automations
+    - sla
+    - custom_roles
+    - audit_logs
+    - captain_integration
+  disabled_features:
+    - disable_branding
+
+enterprise:
+  display_name: Enterprise
+  seats:
+    max: null # unlimited
+  features:
+    - inbound_emails
+    - channel_email
+    - help_center
+    - agent_bots
+    - macros
+    - agent_management
+    - team_management
+    - inbox_management
+    - labels
+    - custom_attributes
+    - automations
+    - sla
+    - custom_roles
+    - audit_logs
+    - disable_branding
+    - captain_integration
+  disabled_features: []
+
+
