@@ -34,7 +34,7 @@ services:
       - vite
       - sidekiq
     ports:
-      - 3007:3000
+      - 3015:3000
     env_file: .env
     environment:
       - VITE_DEV_SERVER_HOST=vite
@@ -84,11 +84,11 @@ services:
     ports:
       - "3036:3036" # Vite dev server
     environment:
-      - VITE_DEV_SERVER_HOST=0.0.0.0
       - NODE_ENV=development
       - RAILS_ENV=development
+      - DANGEROUSLY_DISABLE_HOST_CHECK=true
     entrypoint: /app/docker/entrypoints/vite.sh
-    command: bin/vite dev
+    command: ["bin/vite", "dev"]
     networks:
       - default
       - Gateway

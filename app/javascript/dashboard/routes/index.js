@@ -6,7 +6,22 @@ import store from 'dashboard/store';
 import { validateLoggedInRoutes } from '../helper/routeHelpers';
 import AnalyticsHelper from '../helper/AnalyticsHelper';
 
-const routes = [...dashboard.routes];
+const routes = [
+  ...dashboard.routes,
+  {
+    path: '/app/',
+    name: 'root_dashboard',
+    redirect: to => {
+      // Get user from store to redirect to their account
+      const user = store.getters.getCurrentUser;
+      if (user && user.account_id) {
+        return `/app/accounts/${user.account_id}/dashboard`;
+      }
+      // Fallback - will be handled by validateAuthenticateRoutePermission
+      return '/app/login';
+    }
+  }
+];
 
 export const router = createRouter({ history: createWebHistory(), routes });
 
