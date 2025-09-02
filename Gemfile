@@ -212,8 +212,10 @@ group :development do
   gem 'stackprof'
   # Should install the associated chrome extension to view query logs
   gem 'meta_request', '>= 0.8.3'
-
-  gem 'tidewave'
+  
+  # Tidewave only works in development mode with config.enable_reloading = true
+  # Moving to development group to prevent production crashes
+  # gem 'tidewave' # Disabled - causes Sidekiq to crash in production
 end
 
 group :test do
