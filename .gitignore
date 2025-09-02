@@ -94,3 +94,15 @@ yarn-debug.log*
 .claude/settings.local.json
 .cursor
 CLAUDE.local.md
+
+# Azure and sensitive files
+azure-env.json
+azure-env-config.txt
+azure-set-env.sh
+debug_fb_token.rb
+*_token.rb
+*_secret*
+*.pem
+*.key
+check_fb_webhook.rb
+test_tokens.rb
