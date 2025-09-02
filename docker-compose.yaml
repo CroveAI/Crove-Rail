@@ -14,7 +14,7 @@ services:
     image: crove:development
     container_name: crove
     env_file: .env
-    restart: unless-stopped
+    restart: always
 
   rails:
     <<: *base
@@ -41,11 +41,20 @@ services:
       - NODE_ENV=development
       - RAILS_ENV=development
     entrypoint: /app/docker/entrypoints/rails.sh
-    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]
     networks:
       - default
       - Gateway
-    restart: unless-stopped
+    restart: always
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    network_mode: host
+    environment:
+      - TUNNEL_TOKEN=eyJhIjoiMzM2OGZmOThhNGM5NTYxNjRiN2JiZGM4ZmI5NTAxNjMiLCJ0IjoiYzA5YTRiZjYtNjkzNC00NTkxLWIyOGEtZmI5Y2ZmMWM2ODEzIiwicyI6Ik1XSmpZalkzWVdVdE1qRTRPQzAwTVdWakxXRXlNVFV0TkRjME9HWTVaV1l3TWpVMyJ9
+    command: tunnel run
+    restart: always
 
   sidekiq:
     <<: *base
@@ -65,7 +74,7 @@ services:
     networks:
       - default
       - Gateway
-    restart: unless-stopped
+    restart: always
 
   vite:
     <<: *base
@@ -87,12 +96,13 @@ services:
       - NODE_ENV=development
       - RAILS_ENV=development
       - DANGEROUSLY_DISABLE_HOST_CHECK=true
+      - VITE_HOST=0.0.0.0
     entrypoint: /app/docker/entrypoints/vite.sh
     command: ["bin/vite", "dev"]
     networks:
       - default
       - Gateway
-    restart: unless-stopped
+    restart: always
 
 volumes:
   packs:
