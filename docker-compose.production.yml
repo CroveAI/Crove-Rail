@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: crove-postgres
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=chatwoot_production
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - crove-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: crove-redis
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - crove-network
+
+  rails:
+    image: joyai/crove-rails:latest
+    container_name: crove-rails
+    restart: always
+    ports:
+      - "3010:3000"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - RAILS_ENV=production
+      - SECRET_KEY_BASE=aef1e3ae6252c8f3c60af52292747bb080711bb5bc983551c6e71afec2ffa72f1cf9a93d15abe1243f7eff5b14c666cd1d6a10db1c69ce1e8c5015e5f8431d0a
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/chatwoot_production
+      - REDIS_URL=redis://redis:6379
+      - RAILS_LOG_TO_STDOUT=true
+      - RAILS_SERVE_STATIC_FILES=true
+      - INSTALLATION_NAME=Crove
+      - FRONTEND_URL=https://beta.crove.com
+    command: bundle exec rails server -b 0.0.0.0 -p 3000
+    networks:
+      - crove-network
+
+  sidekiq:
+    image: joyai/crove-rails:latest
+    container_name: crove-sidekiq
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - RAILS_ENV=production
+      - SECRET_KEY_BASE=aef1e3ae6252c8f3c60af52292747bb080711bb5bc983551c6e71afec2ffa72f1cf9a93d15abe1243f7eff5b14c666cd1d6a10db1c69ce1e8c5015e5f8431d0a
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/chatwoot_production
+      - REDIS_URL=redis://redis:6379
+    command: bundle exec sidekiq -C config/sidekiq.yml
+    networks:
+      - crove-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  crove-network:
+    driver: bridge
