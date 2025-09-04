@@ -299,38 +299,118 @@ rails:
     start_period: 40s
 ```
 
-## CI/CD Pipeline (Future)
+## CI/CD Pipeline (Active)
 
-### GitHub Actions Workflow
-```yaml
-name: Deploy to Azure VM
+### GitHub Actions Setup
 
-on:
-  push:
-    branches: [main]
+The repository is configured with automated CI/CD pipeline using GitHub Actions.
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      
-      - name: Build and push Docker image
-        run: |
-          docker build -t joyai/crove-rails:latest .
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u joyai --password-stdin
-          docker push joyai/crove-rails:latest
-      
-      - name: Deploy to Azure VM
-        uses: azure/CLI@v1
-        with:
-          inlineScript: |
-            az vm run-command invoke \
-              --resource-group Crove \
-              --name Crove-Dev \
-              --command-id RunShellScript \
-              --scripts "cd /home/joy && docker-compose pull && docker-compose up -d"
+#### Workflow File
+Located at `.github/workflows/deploy-azure-vm.yml`
+
+#### Features
+- **Automatic deployment** on push to `main` or `develop` branches
+- **Manual deployment** via GitHub Actions UI
+- **Docker layer caching** for faster builds
+- **Health checks** and automatic rollback on failure
+- **Tagged images** with commit SHA for easy tracking
+
+### Setup Instructions
+
+#### 1. Install GitHub CLI
+```bash
+# Ubuntu/Debian (official method)
+(type -p wget >/dev/null || (sudo apt update && sudo apt install wget -y)) \
+    && sudo mkdir -p -m 755 /etc/apt/keyrings \
+    && out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    && cat $out | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+    && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && sudo apt update \
+    && sudo apt install gh -y
 ```
+
+#### 2. Authenticate GitHub CLI
+```bash
+gh auth login
+# Choose: GitHub.com → HTTPS → Login with web browser
+```
+
+#### 3. Configure GitHub Secrets
+
+**Docker Hub Credentials:**
+```bash
+# Set Docker Hub username
+gh secret set DOCKER_USERNAME --body "joyai" --repo CroveAI/Crove
+
+# Create Docker Hub Personal Access Token at https://hub.docker.com/settings/security
+# Then set the token:
+gh secret set DOCKER_PASSWORD --body "YOUR_DOCKER_TOKEN" --repo CroveAI/Crove
+```
+
+**Azure Credentials:**
+```bash
+# Get subscription ID
+az account show --query id -o tsv
+
+# Create service principal (replace SUBSCRIPTION_ID)
+az ad sp create-for-rbac \
+  --name "github-actions-crove" \
+  --role contributor \
+  --scopes /subscriptions/SUBSCRIPTION_ID/resourceGroups/Crove \
+  --sdk-auth > azure-creds.json
+
+# Set Azure credentials
+gh secret set AZURE_CREDENTIALS < azure-creds.json --repo CroveAI/Crove
+
+# Clean up credentials file
+rm azure-creds.json
+```
+
+#### 4. Verify Secrets
+```bash
+gh secret list --repo CroveAI/Crove
+# Should show: AZURE_CREDENTIALS, DOCKER_PASSWORD, DOCKER_USERNAME
+```
+
+### Deployment Operations
+
+#### Manual Deployment
+```bash
+# Trigger deployment manually
+gh workflow run "Deploy to Azure VM" --ref develop --repo CroveAI/Crove
+
+# Check workflow status
+gh run list --workflow=deploy-azure-vm.yml --repo CroveAI/Crove
+
+# Watch workflow progress
+gh run watch --repo CroveAI/Crove
+```
+
+#### Monitor Deployments
+- **GitHub UI**: https://github.com/CroveAI/Crove/actions
+- **CLI**: `gh run list --repo CroveAI/Crove`
+
+### Workflow Process
+
+1. **Build Phase**
+   - Checkout code from repository
+   - Setup Docker Buildx for advanced features
+   - Login to Docker Hub
+   - Build Docker image with production settings
+   - Push to Docker Hub with tags (latest + commit SHA)
+
+2. **Deploy Phase**
+   - Login to Azure
+   - Pull latest image on VM
+   - Stop existing containers
+   - Start new containers
+   - Run database migrations
+   - Perform health check
+
+3. **Rollback (if failure)**
+   - Automatically reverts to previous stable image
+   - Restarts containers with stable version
 
 ## Cost Optimization
 
