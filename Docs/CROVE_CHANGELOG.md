@@ -1,5 +1,29 @@
 # Crove Development Changelog
 
+## 2025-09-05 - Merged with Upstream Chatwoot Develop
+
+### Synced
+- **Merged upstream/develop**: Successfully merged latest Chatwoot develop branch
+- **Resolved conflicts**: Used upstream versions for all conflicting files
+- **Branch status**: 
+  - 44 commits ahead (Crove-specific features)
+  - Now up-to-date with chatwoot/chatwoot:develop
+  
+### Files Updated from Upstream
+- Gemfile & Gemfile.lock - Latest dependencies
+- Voice channel implementation 
+- Twilio content templates service
+- Captain (AI) system improvements
+- Multiple i18n translation files
+- Configuration and feature flags
+
+### Development Guide
+- Created `DEVELOPMENT_GUIDE.md` with complete setup instructions
+- Documented fork strategy and sync workflow
+- Added troubleshooting and deployment guides
+
+---
+
 ## 2025-08-28 - Docker Development Environment Fixed
 
 ### Fixed
