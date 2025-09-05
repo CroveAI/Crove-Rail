@@ -1,0 +1,38 @@
+# Custom Helm values for Crove deployment
+image:
+  repository: joyai/crove-rails
+  tag: v2025-2
+
+postgresql:
+  auth:
+    database: crove_production
+    postgresPassword: CroveP0stgres2025
+
+redis:
+  auth:
+    enabled: false
+  master:
+    disableCommands: []
+  replica:
+    disableCommands: []
+
+extraEnvVars:
+  - name: INSTALLATION_ENV
+    value: kubernetes
+  - name: REDIS_URL
+    value: redis://crove-chatwoot-redis-master:6379
+  - name: REDIS_OPENSSL_VERIFY_MODE
+    value: none
+  - name: REDIS_PASSWORD
+    value: ""
+  - name: INSTALLATION_NAME
+    value: Crove
+  - name: FRONTEND_URL
+    value: https://beta.crove.com
+
+service:
+  type: LoadBalancer
+  port: 3000
+
+ingress:
+  enabled: false
