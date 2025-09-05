@@ -106,3 +106,6 @@ debug_fb_token.rb
 *.key
 check_fb_webhook.rb
 test_tokens.rb
+deploy_azure*.sh
+azure-creds.json
+*credentials*.json
