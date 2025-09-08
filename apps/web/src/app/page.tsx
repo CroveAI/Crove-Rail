@@ -13,11 +13,13 @@ import { Navbar } from '@/components/navbar'
 import { Screenshot } from '@/components/screenshot'
 import { Testimonials } from '@/components/testimonials'
 import { Heading, Subheading } from '@/components/text'
+import { CTA } from '@/components/cta'
+import { FAQ } from '@/components/faq'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   description:
-    'Radiant helps you sell more by revealing sensitive information about your customers.',
+    'Crove giúp bạn tạo quy trình AI tự động hoá cho doanh nghiệp – từ intake đến hành động.',
 }
 
 function Hero() {
@@ -28,16 +30,15 @@ function Hero() {
         <Navbar />
         <div className="pt-16 pb-24 sm:pt-24 sm:pb-32 md:pt-32 md:pb-48">
           <h1 className="font-display text-6xl/[0.9] font-medium tracking-tight text-balance text-gray-950 sm:text-8xl/[0.8] md:text-9xl/[0.8]">
-            Close every deal.
+            Build autonomous AI workflows.
           </h1>
           <p className="mt-8 max-w-lg text-xl/7 font-medium text-gray-950/75 sm:text-2xl/8">
-            Radiant helps you sell more by revealing sensitive information about
-            your customers.
+            Crove giúp đội ngũ của bạn tự động hoá quy trình bằng tác nhân AI an toàn, có kiểm soát.
           </p>
           <div className="mt-12 flex flex-col gap-x-6 gap-y-4 sm:flex-row">
-            <Button href="#">Get started</Button>
+            <Button href="#">Bắt đầu miễn phí</Button>
             <Button variant="secondary" href="/pricing">
-              See pricing
+              Xem giá
             </Button>
           </div>
         </div>
@@ -51,7 +52,7 @@ function FeatureSection() {
     <div className="overflow-hidden">
       <Container className="pb-24">
         <Heading as="h2" className="max-w-3xl">
-          A snapshot of your entire sales pipeline.
+          Xây dựng, chạy và giám sát quy trình AI end‑to‑end.
         </Heading>
         <Screenshot
           width={1216}
@@ -67,16 +68,16 @@ function FeatureSection() {
 function BentoSection() {
   return (
     <Container>
-      <Subheading>Sales</Subheading>
+      <Subheading>Workflows</Subheading>
       <Heading as="h3" className="mt-2 max-w-3xl">
-        Know more about your customers than they do.
+        Kết nối dữ liệu, công cụ và tác nhân để tự động hoá công việc.
       </Heading>
 
       <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2">
         <BentoCard
-          eyebrow="Insight"
-          title="Get perfect clarity"
-          description="Radiant uses social engineering to build a detailed financial picture of your leads. Know their budget, compensation package, social security number, and more."
+          eyebrow="Playbooks"
+          title="Thiết kế quy trình nhanh"
+          description="Kéo thả bước xử lý, gọi API, RAG, function calling và human‑in‑the‑loop trong vài phút."
           graphic={
             <div className="h-80 bg-[url(/screenshots/profile.png)] bg-size-[1000px_560px] bg-position-[left_-109px_top_-112px] bg-no-repeat" />
           }
@@ -84,9 +85,9 @@ function BentoSection() {
           className="max-lg:rounded-t-4xl lg:col-span-3 lg:rounded-tl-4xl"
         />
         <BentoCard
-          eyebrow="Analysis"
-          title="Undercut your competitors"
-          description="With our advanced data mining, you’ll know which companies your leads are talking to and exactly how much they’re being charged."
+          eyebrow="Integrations"
+          title="Kết nối hệ thống sẵn có"
+          description="Hỗ trợ webhook, REST, Postgres, Redis, Azure OpenAI, Google Vertex AI và nhiều hơn nữa."
           graphic={
             <div className="absolute inset-0 bg-[url(/screenshots/competitors.png)] bg-size-[1100px_650px] bg-position-[left_-38px_top_-73px] bg-no-repeat" />
           }
@@ -95,8 +96,8 @@ function BentoSection() {
         />
         <BentoCard
           eyebrow="Speed"
-          title="Built for power users"
-          description="It’s never been faster to cold email your entire contact list using our streamlined keyboard shortcuts."
+          title="Tối ưu tốc độ thực thi"
+          description="Bộ nhớ phiên, context caching và retry policy giúp tác nhân chạy ổn định với độ trễ thấp."
           graphic={
             <div className="flex size-full pt-10 pl-10">
               <Keyboard highlighted={['LeftCommand', 'LeftShift', 'D']} />
@@ -105,16 +106,16 @@ function BentoSection() {
           className="lg:col-span-2 lg:rounded-bl-4xl"
         />
         <BentoCard
-          eyebrow="Source"
-          title="Get the furthest reach"
-          description="Bypass those inconvenient privacy laws to source leads from the most unexpected places."
+          eyebrow="Observability"
+          title="Theo dõi & kiểm soát"
+          description="Trace, metrics và audit log để kiểm soát chi phí, chất lượng và rủi ro."
           graphic={<LogoCluster />}
           className="lg:col-span-2"
         />
         <BentoCard
-          eyebrow="Limitless"
-          title="Sell globally"
-          description="Radiant helps you sell in locations currently under international embargo."
+          eyebrow="Governance"
+          title="Bảo mật cấp doanh nghiệp"
+          description="RBAC, PII redaction, secret vault và kiểm soát quyền theo môi trường."
           graphic={<Map />}
           className="max-lg:rounded-b-4xl lg:col-span-2 lg:rounded-br-4xl"
         />
@@ -127,17 +128,17 @@ function DarkBentoSection() {
   return (
     <div className="mx-2 mt-2 rounded-4xl bg-gray-900 py-32">
       <Container>
-        <Subheading dark>Outreach</Subheading>
+        <Subheading dark>Automation</Subheading>
         <Heading as="h3" dark className="mt-2 max-w-3xl">
-          Customer outreach has never been easier.
+          Tự động hoá nghiệp vụ phức tạp bằng tác nhân AI đa bước.
         </Heading>
 
         <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2">
           <BentoCard
             dark
-            eyebrow="Networking"
-            title="Sell at the speed of light"
-            description="Our RadiantAI chat assistants analyze the sentiment of your conversations in real time, ensuring you're always one step ahead."
+            eyebrow="Orchestration"
+            title="Điều phối tác nhân"
+            description="Song song hoá bước xử lý, chia nhánh theo điều kiện và đồng bộ hoá kết quả."
             graphic={
               <div className="h-80 bg-[url(/screenshots/networking.png)] bg-size-[851px_344px] bg-no-repeat" />
             }
@@ -146,26 +147,26 @@ function DarkBentoSection() {
           />
           <BentoCard
             dark
-            eyebrow="Integrations"
-            title="Meet leads where they are"
-            description="With thousands of integrations, no one will be able to escape your cold outreach."
+            eyebrow="Tools"
+            title="Dùng công cụ đúng lúc"
+            description="Function calling an toàn với schema rõ ràng, hạn chế sai lệch và prompt injection."
             graphic={<LogoTimeline />}
             // `overflow-visible!` is needed to work around a Chrome bug that disables the mask on the graphic.
             className="z-10 overflow-visible! lg:col-span-2 lg:rounded-tr-4xl"
           />
           <BentoCard
             dark
-            eyebrow="Meetings"
-            title="Smart call scheduling"
-            description="Automatically insert intro calls into your leads' calendars without their consent."
+            eyebrow="Human‑in‑the‑loop"
+            title="Can thiệp khi cần"
+            description="Bước phê duyệt, chỉnh sửa output, hoặc fallback sang kịch bản thay thế."
             graphic={<LinkedAvatars />}
             className="lg:col-span-2 lg:rounded-bl-4xl"
           />
           <BentoCard
             dark
-            eyebrow="Engagement"
-            title="Become a thought leader"
-            description="RadiantAI automatically writes LinkedIn posts that relate current events to B2B sales, helping you build a reputation as a thought leader."
+            eyebrow="Compliance"
+            title="Tuân thủ & kiểm toán"
+            description="Lưu vết đầy đủ để đáp ứng chính sách nội bộ và yêu cầu kiểm toán."
             graphic={
               <div className="h-80 bg-[url(/screenshots/engagement.png)] bg-size-[851px_344px] bg-no-repeat" />
             }
@@ -191,6 +192,8 @@ export default function Home() {
           <BentoSection />
         </div>
         <DarkBentoSection />
+        <FAQ />
+        <CTA />
       </main>
       <Testimonials />
       <Footer />

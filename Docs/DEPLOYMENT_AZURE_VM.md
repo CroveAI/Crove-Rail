@@ -147,19 +147,60 @@ az vm run-command invoke \
   --scripts "cd /home/joy && docker-compose -f docker-compose.production.yml up -d"
 ```
 
-### 4. Run Database Migrations
+### 4. Run Database Migrations and Initial Setup
 
 ```bash
 # First time setup - create and migrate database
-docker run --rm \
-  --network joy_crove-network \
-  -e RAILS_ENV=production \
-  -e DATABASE_URL=postgresql://postgres:postgres@crove-postgres:5432/chatwoot_production \
-  -e REDIS_URL=redis://crove-redis:6379 \
-  -e SECRET_KEY_BASE=<your-secret-key> \
-  joyai/crove-rails:latest \
-  bundle exec rails db:create db:migrate db:seed
+docker exec crove-rails bundle exec rails db:create RAILS_ENV=production
+docker exec crove-rails bundle exec rails db:migrate RAILS_ENV=production
+
+# IMPORTANT: Create initial data for Facebook webhook to work
+docker exec crove-postgres psql -U postgres -d chatwoot_production -c "
+-- Create account if not exists
+INSERT INTO accounts (name, created_at, updated_at) 
+VALUES ('Crove', NOW(), NOW())
+ON CONFLICT DO NOTHING;
+
+-- Create Facebook channel (update tokens later via UI)
+INSERT INTO channel_facebook_pages (
+  page_id, 
+  user_access_token,
+  page_access_token, 
+  account_id, 
+  created_at, 
+  updated_at
+) VALUES (
+  '735579849630347',  -- Your Facebook Page ID
+  'dummy_user_token',  -- Will be updated when connecting via UI
+  'dummy_page_token',  -- Will be updated when connecting via UI
+  1,
+  NOW(),
+  NOW()
+) ON CONFLICT DO NOTHING;
+
+-- Create inbox for Facebook
+INSERT INTO inboxes (
+  channel_id,
+  account_id,
+  name,
+  channel_type,
+  created_at,
+  updated_at
+) VALUES (
+  (SELECT id FROM channel_facebook_pages WHERE page_id = '735579849630347'),
+  1,
+  'Facebook Page',
+  'Channel::FacebookPage',
+  NOW(),
+  NOW()
+) ON CONFLICT DO NOTHING;
+"
+
+# Or run seed if you have seed data configured
+docker exec crove-rails bundle exec rails db:seed RAILS_ENV=production
 ```
+
+**Note**: Without initial Account, Channel, and Inbox data, Facebook webhooks will be received but messages won't be stored.
 
 ### 5. Configure Nginx Reverse Proxy
 
@@ -261,6 +302,49 @@ docker restart crove-rails
 postgres:
   image: pgvector/pgvector:pg17
 ```
+
+### Issue: Facebook messages received but not stored
+**Cause**: Empty database - no Account, Channel, or Inbox records
+**Symptoms**: 
+- Sidekiq shows `FacebookEventsJob` processed successfully
+- But `Conversation.count` and `Message.count` remain 0
+- No errors in logs
+
+**Solution**: Run the database initialization SQL from step 4 above, or:
+```bash
+# Quick fix via Azure CLI
+az vm run-command invoke \
+  --resource-group Crove \
+  --name Crove-Dev \
+  --command-id RunShellScript \
+  --scripts "sudo docker exec crove-postgres psql -U postgres -d chatwoot_production -c \"
+    INSERT INTO accounts (id, name, created_at, updated_at) 
+    VALUES (1, 'Crove', NOW(), NOW()) ON CONFLICT DO NOTHING;
+    
+    INSERT INTO channel_facebook_pages (
+      id, page_id, user_access_token, page_access_token, 
+      account_id, created_at, updated_at
+    ) VALUES (
+      1, '735579849630347', 'token', 'token', 
+      1, NOW(), NOW()
+    ) ON CONFLICT DO NOTHING;
+    
+    INSERT INTO inboxes (
+      channel_id, account_id, name, channel_type, 
+      created_at, updated_at
+    ) VALUES (
+      1, 1, 'Facebook', 'Channel::FacebookPage', 
+      NOW(), NOW()
+    ) ON CONFLICT DO NOTHING;
+  \""
+
+# Then restart Sidekiq to sync
+docker restart crove-sidekiq
+```
+
+### Issue: ActionCable/WebSocket not working
+**Cause**: Missing ActionCable configuration for production
+**Solution**: Already fixed in `config/initializers/action_cable_production_fix.rb`
 
 ## Security Considerations
 
