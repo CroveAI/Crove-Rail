@@ -62,26 +62,41 @@ jobs:
         uses: azure/CLI@v1
         with:
           inlineScript: |
-            # Pull latest image and restart containers
+            # Backup database and deploy with data preservation
             az vm run-command invoke \
               --resource-group ${{ env.AZURE_RG }} \
               --name ${{ env.AZURE_VM }} \
               --command-id RunShellScript \
               --scripts "
                 cd /home/joy
+                
+                # Create backup directory
+                mkdir -p /home/joy/backups/database
+                
+                # Backup database before deployment
+                echo 'Creating database backup...'
+                TIMESTAMP=\$(date +'%Y%m%d_%H%M%S')
+                docker exec crove-postgres pg_dump -U postgres -d chatwoot_production | gzip > /home/joy/backups/database/pre_deploy_\${TIMESTAMP}.sql.gz
+                echo 'Database backup created: pre_deploy_\${TIMESTAMP}.sql.gz'
+                
+                # Pull latest image
                 docker pull ${{ env.DOCKER_IMAGE }}:latest
-                docker-compose -f docker-compose.production.yml down
-                docker-compose -f docker-compose.production.yml up -d
+                
+                # Stop only Rails and Sidekiq (keep database running)
+                docker stop crove-rails crove-sidekiq || true
+                
+                # Update Rails and Sidekiq containers
+                docker-compose -f docker-compose.production.yml up -d crove-rails crove-sidekiq
                 
                 # Wait for Rails to be ready
-                sleep 10
+                sleep 15
                 
                 # Run migrations
                 docker exec crove-rails bundle exec rails db:migrate RAILS_ENV=production
                 
                 # Check status
                 docker ps
-                echo 'Deployment completed successfully!'
+                echo 'Deployment completed successfully with data preservation!'
               "
 
       - name: Health Check
