@@ -1,5 +1,28 @@
 # Crove Development Changelog
 
+## 2025-09-10 - Infrastructure Updates & Troubleshooting Guide
+
+### Fixed
+- **Cloudflare Tunnel Network Issue**: Fixed connection refused errors by reverting to `network_mode: host`
+  - Issue: Tunnel couldn't reach Rails container when using Docker networks
+  - Solution: Use host network mode for cloudflared container
+  
+- **localhost:3015 Connection Reset**: Fixed MiniProfiler compatibility issue with Rack
+  - Issue: `NameError: uninitialized constant Rack::File` causing connection resets
+  - Solution: Container restart clears error state
+
+### Added
+- **Troubleshooting Documentation**: Created comprehensive `Docs/TROUBLESHOOTING.md`
+  - 10+ common issues with solutions
+  - Debugging commands reference
+  - Environment-specific guidance
+  - Network and database debugging tips
+
+### Infrastructure
+- Confirmed both access methods working:
+  - `https://dev.crove.com` via Cloudflare tunnel
+  - `http://localhost:3015` direct host access
+
 ## 2025-09-05 - Merged with Upstream Chatwoot Develop
 
 ### Synced
