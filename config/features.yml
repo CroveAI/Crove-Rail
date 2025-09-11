@@ -208,3 +208,39 @@
   display_name: SAML
   enabled: false
   premium: true
+# Crove Premium Features (Clean-room implementation)
+- name: crove_assistants
+  display_name: AI Assistants
+  enabled: false
+  premium: true
+  help_url: https://crove.com/docs/ai-assistants
+- name: crove_knowledge_base
+  display_name: Knowledge Base (AI)
+  enabled: false
+  premium: true
+  help_url: https://crove.com/docs/knowledge-base
+- name: crove_advanced_sla
+  display_name: Advanced SLA
+  enabled: false
+  premium: true
+  help_url: https://crove.com/docs/sla
+- name: crove_audit_logs
+  display_name: Advanced Audit Logs
+  enabled: false
+  premium: true
+  help_url: https://crove.com/docs/audit-logs
+- name: crove_custom_roles
+  display_name: Custom Roles & Permissions
+  enabled: false
+  premium: true
+  help_url: https://crove.com/docs/custom-roles
+- name: crove_white_label
+  display_name: White Label
+  enabled: false
+  premium: true
+  help_url: https://crove.com/docs/white-label
+- name: crove_help_center
+  display_name: Advanced Help Center
+  enabled: false
+  premium: true
+  help_url: https://crove.com/docs/help-center

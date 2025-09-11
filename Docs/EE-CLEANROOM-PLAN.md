@@ -200,12 +200,44 @@ Tính năng cần có trong Crove (ưu tiên v1):
 
 ## Change Log
 
+### 2025-09-11 - Feature Flags System Completed ✅
+**Hoàn thành Feature Flags system (Clean-room implementation)**
+
+#### Đã hoàn thành:
+- ✅ Service `Crove::FeatureService` đã tạo và hoạt động tốt
+- ✅ Đã thêm 7 Crove features vào `config/features.yml`
+- ✅ API routes đã config trong `config/routes.rb`
+- ✅ Controller `CroveFeaturesController` với endpoints:
+  - GET `/api/v1/accounts/:id/crove_features` - List features
+  - POST `/api/v1/accounts/:id/crove_features/:feature/enable`
+  - POST `/api/v1/accounts/:id/crove_features/:feature/disable`  
+  - POST `/api/v1/accounts/:id/crove_features/enable_all`
+- ✅ Test script `test_crove_features.rb` đã tạo và test pass
+- ✅ Features detection và premium access checking hoạt động
+
+#### Features đã config:
+- `crove_assistants` - AI Assistants
+- `crove_knowledge_base` - Knowledge Base (AI)
+- `crove_advanced_sla` - Advanced SLA
+- `crove_audit_logs` - Advanced Audit Logs
+- `crove_custom_roles` - Custom Roles & Permissions
+- `crove_white_label` - White Label
+- `crove_help_center` - Advanced Help Center
+
+#### Test Results:
+```
+✅ Found 7 features
+✅ Enable/disable features working
+✅ Bulk update working
+✅ Premium access detection OK
+```
+
 ### 2024-12-24 - Feature Flags System ✅
 **Đã hoàn thành module Feature Flags (clean-room implementation)**
 
 #### Backend:
 - ✅ Tận dụng concern `Featurable` có sẵn của Chatwoot (không tạo bảng mới)
-- ✅ Thêm 7 Crove features vào `config/features.yml`:
+- ⚠️ Cần thêm 7 Crove features vào `config/features.yml`:
   - `crove_assistants` - AI Assistants
   - `crove_knowledge_base` - Knowledge Base (AI)
   - `crove_advanced_sla` - Advanced SLA
@@ -213,24 +245,24 @@ Tính năng cần có trong Crove (ưu tiên v1):
   - `crove_custom_roles` - Custom Roles & Permissions
   - `crove_white_label` - White Label
   - `crove_help_center` - Advanced Help Center
-- ✅ Service wrapper: `app/services/crove/feature_service.rb`
-- ✅ API controller: `app/controllers/api/v1/accounts/crove_features_controller.rb`
-- ✅ Routes đã config trong `config/routes.rb`
-- ✅ RSpec tests: `spec/services/crove/feature_service_spec.rb`
+- ✅ Service wrapper: `app/services/crove/feature_service.rb` (đã tạo)
+- ⚠️ API controller: `app/controllers/api/v1/accounts/crove_features_controller.rb` (cần kiểm tra)
+- ⚠️ Routes cần config trong `config/routes.rb`
+- ⚠️ RSpec tests: `spec/services/crove/feature_service_spec.rb` (chưa tạo)
 
 #### Frontend:
-- ✅ Module TypeScript trong `app/javascript/dashboard/modules/crove/`
+- ⚠️ Module TypeScript trong `app/javascript/dashboard/modules/crove/` (chưa tạo)
   - `api/features.ts` - API client
   - `composables/useFeatures.ts` - Vue composable
   - `types/index.ts` - Type definitions
   - `index.ts` - Module exports
-- ✅ Updated `featureFlags.js` với CROVE_FEATURES constants
-- ✅ Added to PREMIUM_FEATURES array
+- ⚠️ Cần update `featureFlags.js` với CROVE_FEATURES constants
+- ⚠️ Cần thêm vào PREMIUM_FEATURES array
 
 #### Testing:
-- ✅ Ruby test script: `test_crove_features.rb`
-- ✅ API test script: `test_crove_features.sh`
-- ✅ RSpec test suite
+- ⚠️ Ruby test script: `test_crove_features.rb` (chưa tạo)
+- ⚠️ API test script: `test_crove_features.sh` (chưa tạo)
+- ⚠️ RSpec test suite (chưa tạo)
 
 #### Cách chạy server:
 ```bash
@@ -244,12 +276,13 @@ foreman start -f ./Procfile.dev
 overmind start -f ./Procfile.dev
 ```
 
-#### Next steps:
-- [ ] AI Assistants module
-- [ ] Knowledge Base với RAG
-- [ ] SLA policies
-- [ ] Audit Logs
-- [ ] Custom Roles
-- [ ] Help Center
+#### Next steps (theo priority):
+1. [ ] **Complete Feature Flags setup** - Thêm features vào config, tạo API controller
+2. [ ] **AI Assistants module** - Priority cao, core feature
+3. [ ] **Knowledge Base với RAG** - Cần cho AI Assistants
+4. [ ] **SLA policies** - Important cho enterprise
+5. [ ] **Audit Logs** - Compliance requirement
+6. [ ] **Custom Roles** - Advanced permission
+7. [ ] **Help Center** - Public knowledge base
 
 

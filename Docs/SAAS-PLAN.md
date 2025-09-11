@@ -1,6 +1,6 @@
 ## Crove → SaaS: Kế hoạch đa-tenant + billing
 
-Mục tiêu: biến Crove thành sản phẩm SaaS sẵn sàng production, hỗ trợ đa tenant (workspace/organization), subscription billing (seat + usage), feature entitlements và vận hành ổn định. Toàn bộ backend/frontend viết bằng TypeScript [[memory:6418507]]. Thời lượng ước tính theo năng lực “build cùng AI Agent” thay vì coder thủ công [[memory:6418492]].
+Mục tiêu: biến Crove thành sản phẩm SaaS sẵn sàng production, hỗ trợ đa tenant (workspace/organization), subscription billing (seat + usage), feature entitlements và vận hành ổn định. Backend dựa trên Rails (Ruby) hiện có, frontend Vue.js/TypeScript. Thời lượng ước tính theo năng lực "build cùng AI Agent".
 
 ### Phạm vi
 - Đa tenant theo workspace (organization) với vai trò (Owner/Admin/Member).
@@ -36,17 +36,17 @@ flowchart LR
   B --> OBS[(Sentry/PostHog)]
 ```
 
-### Liên kết monorepo (hiện có)
-- `apps/api`: API routes/webhooks, tách domain `billing`, `tenancy`, `usage`.
-- `apps/app` + `apps/web`: UI end‑user và marketing/app shell.
-- `packages/database`: Prisma, sẽ thêm `tenant_id` + policies RLS.
-- `packages/auth`: tổ chức theo `Organization`, `Membership`.
-- `packages/feature-flags`: ánh xạ sang entitlements theo plan.
-- `packages/payments`: tích hợp Stripe (Checkout/Portal/Webhooks/Invoices/Usage records).
+### Cấu trúc Chatwoot/Rails (hiện có)
+- `app/controllers/api/v1`: API routes/webhooks, sẽ thêm `billing`, `organizations`
+- `app/javascript/dashboard`: Vue.js frontend 
+- `app/models`: ActiveRecord models, sẽ thêm `Organization`, `Membership`, `Subscription`
+- `app/services`: Business logic, đã có `Crove::FeatureService`
+- `db/migrate`: Database migrations với PostgreSQL
+- `config/features.yml`: Feature flags configuration
 
 ---
 
-## Data model (Prisma + Postgres)
+## Data model (ActiveRecord + PostgreSQL)
 
 Các bảng chính (bổ sung/cập nhật):
 - `Organization` (workspace)
@@ -93,10 +93,10 @@ RLS: bật `ENABLE ROW LEVEL SECURITY` và policy `tenant_id = current_setting('
 ---
 
 ## Identity & Access
-- `packages/auth`: NextAuth (Email/OAuth) + Organizations.
-- Mời thành viên qua email, nhận vai trò.
-- SSO SAML/OIDC (phase sau, Enterprise).
-- API keys per org cho tích hợp máy‑máy.
+- Devise auth (đã có sẵn trong Chatwoot) + Organizations extension
+- Mời thành viên qua email, nhận vai trò
+- SSO SAML/OIDC (phase sau, Enterprise)
+- API keys per org cho tích hợp máy-máy
 
 ---
 
@@ -110,10 +110,10 @@ RLS: bật `ENABLE ROW LEVEL SECURITY` và policy `tenant_id = current_setting('
 ## Phân kỳ triển khai (phases)
 
 ### P0 – Nền tảng tenancy (1–2 tuần, theo AI Agent)
-- Thêm `Organization`, `Membership`.
-- Migrate Prisma: thêm `tenantId` vào bảng đa‑tenant, index.
-- Middleware resolve tenant từ subdomain, set `app.current_tenant` trước khi truy vấn.
-- Viết policies RLS và test smoke.
+- Thêm models `Organization`, `Membership` trong ActiveRecord
+- Migration: thêm `organization_id` vào các bảng đa-tenant, index
+- Middleware resolve tenant từ subdomain trong Rails
+- Implement PostgreSQL RLS policies và test
 
 ### P1 – Billing cơ bản (1–2 tuần)
 - Tạo `Subscription`, tích hợp Stripe Checkout/Portal.
@@ -143,15 +143,17 @@ RLS: bật `ENABLE ROW LEVEL SECURITY` và policy `tenant_id = current_setting('
 
 ---
 
-## Việc cần làm theo repo
-- `packages/database/prisma/schema.prisma`: thêm models và `tenantId` + index.
-- `apps/api`:
-  - Middleware tenancy; routes: `billing/*`, `organizations/*`, `members/*`.
-  - `api/webhooks/stripe` idempotent; `api/usage/report` nội bộ.
-- `packages/payments`: client Stripe, helpers Checkout/Portal, usage reporter.
-- `packages/feature-flags`: chuyển thành `entitlements` map theo plan.
-- `packages/auth`: Organization + Membership; hooks `useCurrentOrganization`.
-- `apps/app`: UI Billing/Usage/Members, onboarding tạo workspace.
+## Việc cần làm theo cấu trúc Rails
+- `db/migrate`: Tạo migrations cho Organization, Membership, Subscription
+- `app/models`: ActiveRecord models với associations và validations
+- `app/controllers/api/v1`:
+  - Middleware tenancy; controllers: `billing`, `organizations`, `members`
+  - `webhooks/stripe_controller` với idempotency
+- `app/services`:
+  - `Stripe::CheckoutService`, `Stripe::PortalService`
+  - `UsageReportingService` cho metered billing
+- `app/javascript/dashboard`: Vue components cho Billing/Usage/Members
+- `config/features.yml`: Map features theo plan (Free/Pro/Business)
 
 ---
 
@@ -163,12 +165,26 @@ RLS: bật `ENABLE ROW LEVEL SECURITY` và policy `tenant_id = current_setting('
 ---
 
 ## Kế hoạch triển khai nhanh (checklist)
-- Tạo `Organization/Membership/Subscription` + migrations.
-- Middleware subdomain → `tenantId`.
-- Stripe: products/prices, Checkout + Portal, webhooks.
-- Entitlements guard; UI Billing + Members.
-- Usage counters + reporter.
-- Tài liệu vận hành và runbooks sự cố.
+
+### Sprint 1: Foundation (Week 1-2)
+- [ ] Tạo migrations và models cho Organization/Membership/Subscription
+- [ ] Middleware subdomain resolver trong ApplicationController
+- [ ] Basic CRUD APIs cho organizations
+
+### Sprint 2: Billing (Week 3-4)  
+- [ ] Stripe integration: products/prices setup
+- [ ] Checkout và Portal controllers
+- [ ] Webhooks handler với idempotency
+
+### Sprint 3: Features & UI (Week 5-6)
+- [ ] Feature entitlements trong Crove::FeatureService
+- [ ] Vue components: Billing, Members, Usage
+- [ ] Usage metering với Redis + background jobs
+
+### Sprint 4: Polish (Week 7-8)
+- [ ] Testing và bug fixes
+- [ ] Documentation và deployment guides
+- [ ] Monitoring và alerting setup
 
 
 

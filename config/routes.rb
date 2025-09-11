@@ -81,6 +81,14 @@ Rails.application.routes.draw do
           end
           resources :assignable_agents, only: [:index]
           resource :audit_logs, only: [:show]
+          
+          # Crove Features Management
+          namespace :crove_features do
+            get :index, action: :index, controller: '/api/v1/accounts/crove_features'
+            post ':feature/enable', action: :enable, controller: '/api/v1/accounts/crove_features'
+            post ':feature/disable', action: :disable, controller: '/api/v1/accounts/crove_features'
+            post 'enable_all', action: :enable_all, controller: '/api/v1/accounts/crove_features'
+          end
           resources :callbacks, only: [] do
             collection do
               post :register_facebook_page
