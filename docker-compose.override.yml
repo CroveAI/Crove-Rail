@@ -2,6 +2,26 @@
 # Optimized for 90GB RAM allocation
 services:
   rails:
+    develop:
+      watch:
+        - action: rebuild
+          path: ./Gemfile
+          target: /app/Gemfile
+        - action: sync
+          path: ./app
+          target: /app/app
+        - action: sync
+          path: ./config
+          target: /app/config
+        - action: sync
+          path: ./db
+          target: /app/db
+        - action: sync
+          path: ./lib
+          target: /app/lib
+        - action: sync+restart
+          path: ./config/initializers
+          target: /app/config/initializers
     environment:
       - RAILS_ENV=development
       - RAILS_MAX_THREADS=20
@@ -30,6 +50,17 @@ services:
       - assets_cache:/app/public/assets
 
   sidekiq:
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./app/jobs
+          target: /app/app/jobs
+        - action: sync+restart
+          path: ./app/workers
+          target: /app/app/workers
+        - action: sync
+          path: ./config
+          target: /app/config
     environment:
       - RAILS_MAX_THREADS=10
       - MALLOC_ARENA_MAX=2
@@ -44,6 +75,20 @@ services:
           memory: 4G
 
   vite:
+    develop:
+      watch:
+        - action: sync
+          path: ./app/javascript
+          target: /app/app/javascript
+        - action: sync
+          path: ./app/frontend
+          target: /app/app/frontend
+        - action: sync+restart
+          path: ./vite.config.ts
+          target: /app/vite.config.ts
+        - action: sync+restart
+          path: ./package.json
+          target: /app/package.json
     environment:
       - NODE_OPTIONS=--max-old-space-size=8192
     deploy:

@@ -82,11 +82,29 @@ jobs:
                 # Pull latest image
                 docker pull ${{ env.DOCKER_IMAGE }}:latest
                 
+                # IMPORTANT: Never stop or recreate database container
                 # Stop only Rails and Sidekiq (keep database running)
                 docker stop crove-rails crove-sidekiq || true
+                docker rm crove-rails crove-sidekiq || true
                 
-                # Update Rails and Sidekiq containers
-                docker-compose -f docker-compose.production.yml up -d crove-rails crove-sidekiq
+                # Start Rails with updated image (using docker run to avoid docker-compose recreating containers)
+                docker run -d --name crove-rails --restart always \
+                  -p 3015:3000 \
+                  --network crove-network \
+                  -e RAILS_ENV=production \
+                  -e DATABASE_URL=postgresql://postgres:postgres@crove-postgres:5432/chatwoot_production \
+                  -e REDIS_URL=redis://crove-redis:6379 \
+                  ${{ env.DOCKER_IMAGE }}:latest \
+                  sh -c 'bundle exec rails server -b 0.0.0.0 -p 3000'
+                
+                # Start Sidekiq with updated image  
+                docker run -d --name crove-sidekiq --restart always \
+                  --network crove-network \
+                  -e RAILS_ENV=production \
+                  -e DATABASE_URL=postgresql://postgres:postgres@crove-postgres:5432/chatwoot_production \
+                  -e REDIS_URL=redis://crove-redis:6379 \
+                  ${{ env.DOCKER_IMAGE }}:latest \
+                  bundle exec sidekiq -C config/sidekiq.yml
                 
                 # Wait for Rails to be ready
                 sleep 15

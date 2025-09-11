@@ -1,0 +1,32 @@
+{
+  "kind": "singleType",
+  "collectionName": "homepages",
+  "info": {
+    "singularName": "homepage",
+    "pluralName": "homepages",
+    "displayName": "Homepage",
+    "description": "Landing page CMS content"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "heroTitle": { "type": "string", "required": false },
+    "heroSubtitle": { "type": "text" },
+    "primaryCtaLabel": { "type": "string" },
+    "primaryCtaHref": { "type": "string" },
+    "secondaryCtaLabel": { "type": "string" },
+    "secondaryCtaHref": { "type": "string" },
+    "ctaHeading": { "type": "string" },
+    "ctaDescription": { "type": "text" },
+    "ctaPrimaryLabel": { "type": "string" },
+    "ctaPrimaryHref": { "type": "string" },
+    "ctaSecondaryLabel": { "type": "string" },
+    "ctaSecondaryHref": { "type": "string" }
+  }
+}
+
+
+
+

@@ -13,6 +13,7 @@ import {
   MinusIcon,
 } from '@heroicons/react/16/solid'
 import type { Metadata } from 'next'
+import { getPricing, getPricingTiers } from '@/lib/cms'
 
 export const metadata: Metadata = {
   title: 'Pricing',
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
     'Companies all over the world have closed millions of deals with Radiant. Sign up today and start selling smarter.',
 }
 
-const tiers = [
+const tiersStatic = [
   {
     name: 'Starter' as const,
     slug: 'starter',
@@ -107,19 +108,19 @@ const tiers = [
   },
 ]
 
-function Header() {
+function Header({ title, lead }: { title?: string | null; lead?: string | null }) {
   return (
     <Container className="mt-16">
-      <Heading as="h1">Pricing that grows with your team size.</Heading>
+      <Heading as="h1">{title || 'Pricing that grows with your team size.'}</Heading>
       <Lead className="mt-6 max-w-3xl">
-        Companies all over the world have closed millions of deals with Radiant.
-        Sign up today and start selling smarter.
+        {lead ||
+          'Companies all over the world have closed millions of deals with Radiant. Sign up today and start selling smarter.'}
       </Lead>
     </Container>
   )
 }
 
-function PricingCards() {
+function PricingCards({ tiers }: { tiers: typeof tiersStatic }) {
   return (
     <div className="relative py-24">
       <Gradient className="absolute inset-x-2 top-48 bottom-0 rounded-4xl ring-1 ring-black/5 ring-inset" />
@@ -135,7 +136,7 @@ function PricingCards() {
   )
 }
 
-function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
+function PricingCard({ tier }: { tier: (typeof tiersStatic)[number] }) {
   return (
     <div className="-m-2 grid grid-cols-1 rounded-4xl shadow-[inset_0_0_2px_1px_#ffffff4d] ring-1 ring-black/5 max-lg:mx-auto max-lg:w-full max-lg:max-w-md">
       <div className="grid grid-cols-1 rounded-4xl p-2 shadow-md shadow-black/5">
@@ -170,11 +171,7 @@ function PricingCard({ tier }: { tier: (typeof tiers)[number] }) {
   )
 }
 
-function PricingTable({
-  selectedTier,
-}: {
-  selectedTier: (typeof tiers)[number]
-}) {
+function PricingTable({ selectedTier, tiers }: { selectedTier: (typeof tiersStatic)[number]; tiers: typeof tiersStatic }) {
   return (
     <Container className="py-24">
       <table className="w-full text-left">
@@ -265,7 +262,7 @@ function PricingTable({
             ))}
           </tr>
         </thead>
-        {[...new Set(tiers[0].features.map(({ section }) => section))].map(
+        {[...new Set((tiers[0]?.features ?? []).map(({ section }) => section))].map(
           (section) => (
             <tbody key={section} className="group">
               <tr>
@@ -279,7 +276,7 @@ function PricingTable({
                   </div>
                 </th>
               </tr>
-              {tiers[0].features
+              {(tiers[0]?.features ?? [])
                 .filter((feature) => feature.section === section)
                 .map(({ name }) => (
                   <tr
@@ -495,9 +492,26 @@ export default async function Pricing({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   let params = await searchParams
+  const [pricing, fetchedTiers] = await Promise.all([
+    getPricing(),
+    getPricingTiers(),
+  ])
+
+  const tiers: typeof tiersStatic = (Array.isArray(fetchedTiers) && fetchedTiers.length > 0)
+    ? fetchedTiers.map((t) => ({
+        name: t.name as any,
+        slug: t.slug as any,
+        description: (t.description as any) ?? '',
+        priceMonthly: (t.priceMonthly as any) ?? 0,
+        href: '#',
+        highlights: (t.highlights ?? []).map((h) => ({ description: h })),
+        features: [],
+      })) as any
+    : tiersStatic
+
   let tier =
     typeof params.tier === 'string'
-      ? tiers.find(({ slug }) => slug === params.tier)!
+      ? (tiers.find(({ slug }) => slug === params.tier) || tiers[0])
       : tiers[0]
 
   return (
@@ -506,9 +520,9 @@ export default async function Pricing({
       <Container>
         <Navbar />
       </Container>
-      <Header />
-      <PricingCards />
-      <PricingTable selectedTier={tier} />
+      <Header title={pricing?.title} lead={pricing?.lead} />
+      <PricingCards tiers={tiers} />
+      <PricingTable selectedTier={tier} tiers={tiers} />
       <Testimonial />
       <FrequentlyAskedQuestions />
       <Footer />

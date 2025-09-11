@@ -1,7 +1,11 @@
 import { Container } from '@/components/container'
 import { Heading, Subheading } from '@/components/text'
 
-const faqs = [
+export type FAQItem = { q: string; a: string }
+
+type Props = { items?: FAQItem[] }
+
+const defaultFaqs: FAQItem[] = [
   {
     q: 'Crove là gì?',
     a: 'Nền tảng xây dựng quy trình tự động hoá với tác nhân AI, tích hợp dữ liệu và công cụ sẵn có.',
@@ -20,7 +24,8 @@ const faqs = [
   },
 ]
 
-export function FAQ() {
+export function FAQ({ items }: Props) {
+  const faqs = items && items.length > 0 ? items : defaultFaqs
   return (
     <div className="bg-white py-24">
       <Container>

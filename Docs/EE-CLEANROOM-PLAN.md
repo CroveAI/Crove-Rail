@@ -36,22 +36,52 @@ Tài liệu này tổng hợp tính năng Enterprise (EE) của Chatwoot ở m�
 
 ## Thiết kế clean-room đề xuất
 
-### A. Feature flags riêng
-- Bảng `feature_flags` và `account_features` (account_id, feature_key, enabled:boolean, meta:jsonb).
-- Service: `FeatureService.is_enabled(account_id, :captain)`
+### A. Feature flags riêng (✅ Completed)
+- Service: `Crove::FeatureService` sử dụng Featurable concern có sẵn
+- API: `/api/v1/accounts/:id/crove_features` với enable/disable endpoints
+- 7 features đã config trong `config/features.yml`
 
-### B. Assistants module (thay Captain)
-- Bảng:
-  - `assistants` (account_id, name, description, model, params:jsonb, created_by).
-  - `assistant_documents` (assistant_id, source_type, url/path, status, meta:jsonb).
-  - `assistant_tools` (assistant_id, tool_key, config:jsonb).
-- API (đề xuất):
-  - POST /api/assistants; GET /api/assistants; GET /api/assistants/:id
-  - POST /api/assistants/:id/documents
-  - POST /api/assistants/:id/infer { conversation_id, messages[], context }
-- Inference service:
-  - Tích hợp OpenAI/Claude/Groq tuỳ chọn; RAG với pgvector hoặc dịch vụ ngoài.
-  - Bộ nhớ ngắn (conversation state) và cache kết quả.
+### B. Module Structure Pattern
+Mỗi Crove EE module sẽ follow Chatwoot pattern với prefix `crove-`:
+```
+app/javascript/dashboard/
+├── api/crove-[module]/         # API clients
+├── store/crove-[module]/       # Vuex modules  
+├── routes/dashboard/crove-[module]/  # Routes & Views
+└── components-next/crove-[module]/   # Vue 3 components
+
+app/
+├── controllers/api/v1/accounts/crove_[module]_controller.rb
+├── services/crove/[module]_service.rb
+└── models/crove/[module].rb
+```
+
+### C. AI Assistants module (thay Captain)
+Frontend structure:
+```
+app/javascript/dashboard/
+├── api/crove-ai/
+│   ├── assistants.ts
+│   └── knowledge-base.ts
+├── store/crove-ai/
+│   ├── assistants.js
+│   └── knowledge-base.js
+├── routes/dashboard/crove-ai/
+│   ├── assistants/
+│   └── crove-ai.routes.js
+└── components-next/crove-ai/
+    ├── ChatInterface.vue
+    └── KnowledgeBaseSync.vue
+```
+
+Backend:
+- Models: `Crove::Assistant`, `Crove::KnowledgeBase`, `Crove::Document`
+- Controller: `CroveAssistantsController`
+- Service: `Crove::OpenAIService`, `Crove::EmbeddingService`
+- API endpoints:
+  - GET/POST /api/v1/accounts/:id/crove/assistants
+  - POST /api/v1/accounts/:id/crove/assistants/:id/generate
+  - GET/POST /api/v1/accounts/:id/crove/knowledge-bases
 
 ### C. SLA module
 - Bảng:
@@ -277,12 +307,80 @@ overmind start -f ./Procfile.dev
 ```
 
 #### Next steps (theo priority):
-1. [ ] **Complete Feature Flags setup** - Thêm features vào config, tạo API controller
+1. [x] **Complete Feature Flags setup** - ✅ Done 2025-09-11
 2. [ ] **AI Assistants module** - Priority cao, core feature
 3. [ ] **Knowledge Base với RAG** - Cần cho AI Assistants
 4. [ ] **SLA policies** - Important cho enterprise
 5. [ ] **Audit Logs** - Compliance requirement
 6. [ ] **Custom Roles** - Advanced permission
 7. [ ] **Help Center** - Public knowledge base
+
+## Hybrid Architecture Strategy (2025-09-11)
+
+### Quyết định kiến trúc: Rails Core + TypeScript Services
+
+Dựa trên phân tích codebase và best practices, Crove sẽ áp dụng **Hybrid Architecture**:
+
+#### 1. **Giữ Rails Core (Đã có)**
+- Chatwoot engine: conversations, messages, contacts, inboxes
+- Feature flags system (đã hoàn thành)
+- Authentication với Devise
+- Vue.js dashboard cho agents
+
+#### 2. **TypeScript Services Layer (Mới)**
+Complex enterprise features sẽ build với Node.js/TypeScript:
+
+```
+/services
+├── ai-assistant/        # AI RAG & Inference (Fastify + OpenAI)
+├── knowledge-base/      # Document ingestion & embeddings
+├── sla-engine/         # SLA policies & timers (BullMQ)
+├── analytics/          # ClickHouse telemetry
+└── connectors/         # Zalo, Telegram, Discord adapters
+```
+
+#### 3. **Integration Pattern**
+
+```mermaid
+graph LR
+    A[Chatwoot Rails] -->|Webhooks| B[TS Services]
+    B -->|REST API| A
+    B -->|Events| C[BullMQ/Redis]
+    C -->|Process| B
+    D[pgvector] <--> B
+    E[ClickHouse] <--> B
+```
+
+#### 4. **Implementation Timeline**
+
+**Week 1-2: AI Assistant Service**
+- Fastify API server
+- OpenAI/Claude integration  
+- RAG với pgvector
+- Webhook handlers cho Chatwoot events
+
+**Week 3-4: Knowledge Base**
+- Document ingestion (PDF, web crawl)
+- Chunking & embeddings pipeline
+- Search API với pgvector
+
+**Week 5-6: Production Ready**
+- SLA engine với BullMQ
+- Analytics với ClickHouse
+- Docker Compose integration
+
+#### 5. **Advantages**
+- ✅ Không conflict với Chatwoot updates
+- ✅ Modern TypeScript stack cho AI features
+- ✅ Independent scaling và deployment
+- ✅ Gradual migration path
+
+#### 6. **Tech Stack Quyết định**
+- **API**: Fastify (faster than Express)
+- **Queue**: BullMQ + Redis
+- **AI**: OpenAI SDK / Anthropic SDK
+- **Vector DB**: pgvector (existing)
+- **Analytics**: ClickHouse
+- **Deployment**: Docker Compose → K8s
 
 

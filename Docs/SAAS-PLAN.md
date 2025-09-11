@@ -38,11 +38,15 @@ flowchart LR
 
 ### Cấu trúc Chatwoot/Rails (hiện có)
 - `app/controllers/api/v1`: API routes/webhooks, sẽ thêm `billing`, `organizations`
-- `app/javascript/dashboard`: Vue.js frontend 
+- `app/javascript/dashboard`: Vue.js frontend với module structure:
+  - `api/crove-*/`: API clients cho từng module
+  - `store/crove-*/`: Vuex stores
+  - `routes/dashboard/crove-*/`: Routes và Views
+  - `components-next/crove-*/`: Vue 3 components
 - `app/models`: ActiveRecord models, sẽ thêm `Organization`, `Membership`, `Subscription`
-- `app/services`: Business logic, đã có `Crove::FeatureService`
+- `app/services`: Business logic, đã có `Crove::FeatureService` (✅ completed)
 - `db/migrate`: Database migrations với PostgreSQL
-- `config/features.yml`: Feature flags configuration
+- `config/features.yml`: Feature flags configuration (✅ 7 features added)
 
 ---
 
@@ -185,6 +189,186 @@ RLS: bật `ENABLE ROW LEVEL SECURITY` và policy `tenant_id = current_setting('
 - [ ] Testing và bug fixes
 - [ ] Documentation và deployment guides
 - [ ] Monitoring và alerting setup
+
+---
+
+## TypeScript Services Layer (Updated 2025-09-11)
+
+### Architecture Decision: Hybrid Rails + TypeScript
+
+Sau khi phân tích, Crove sẽ adopt **Hybrid Architecture**:
+- **Rails Core**: Giữ Chatwoot làm conversation engine
+- **TypeScript Services**: Build enterprise features với Node.js
+
+### Services Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   Users/Channels                     │
+└────────────────────┬────────────────────────────────┘
+                     ▼
+┌─────────────────────────────────────────────────────┐
+│             Chatwoot Rails Core                      │
+│  • Conversations, Messages, Contacts                 │
+│  • Webhooks → TypeScript Services                    │
+│  • Feature Flags (Crove::FeatureService)            │
+└────────────────────┬────────────────────────────────┘
+                     ▼
+┌─────────────────────────────────────────────────────┐
+│          TypeScript Services Layer                   │
+├─────────────────────────────────────────────────────┤
+│  /services/ai-assistant                             │
+│    • Fastify API (port 3100)                        │
+│    • RAG pipeline với pgvector                      │
+│    • OpenAI/Claude integration                      │
+├─────────────────────────────────────────────────────┤
+│  /services/knowledge-base                           │
+│    • Document ingestion service                     │
+│    • Web crawler, PDF processor                     │
+│    • Embeddings với pgvector                        │
+├─────────────────────────────────────────────────────┤
+│  /services/sla-engine                               │
+│    • BullMQ for SLA timers                         │
+│    • Policy evaluation engine                       │
+│    • Breach notifications                           │
+├─────────────────────────────────────────────────────┤
+│  /services/analytics                                │
+│    • ClickHouse event collector                     │
+│    • Metrics aggregation                           │
+│    • Real-time dashboards                          │
+└─────────────────────────────────────────────────────┘
+                     ▼
+┌─────────────────────────────────────────────────────┐
+│                  Data Layer                          │
+│  • PostgreSQL + pgvector (existing)                 │
+│  • Redis (existing)                                 │
+│  • ClickHouse (new for analytics)                   │
+└─────────────────────────────────────────────────────┘
+```
+
+### Integration Pattern
+
+1. **Webhooks từ Chatwoot → TS Services**
+   ```typescript
+   // services/ai-assistant/src/webhooks/chatwoot.ts
+   app.post('/webhooks/chatwoot', async (req) => {
+     const { event, conversation, message } = req.body
+     if (event === 'message_created') {
+       await aiQueue.add('process', { conversationId, message })
+     }
+   })
+   ```
+
+2. **API calls từ TS → Chatwoot**
+   ```typescript
+   // services/ai-assistant/src/chatwoot/client.ts
+   class ChatwootClient {
+     async sendMessage(conversationId: string, content: string) {
+       return this.api.post(`/conversations/${conversationId}/messages`, {
+         content,
+         message_type: 'outgoing',
+         private: false
+       })
+     }
+   }
+   ```
+
+3. **Feature Flags Integration**
+   ```typescript
+   // services/shared/src/features.ts
+   async function isFeatureEnabled(accountId: number, feature: string) {
+     const response = await chatwootAPI.get(
+       `/api/v1/accounts/${accountId}/crove_features`
+     )
+     return response.data.features[feature]?.enabled
+   }
+   ```
+
+### Docker Compose Integration
+
+```yaml
+# docker-compose.services.yml
+services:
+  ai-assistant:
+    build: ./services/ai-assistant
+    ports:
+      - "3100:3100"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CHATWOOT_API_URL=http://rails:3000
+      - CHATWOOT_API_KEY=${CHATWOOT_API_KEY}
+    depends_on:
+      - DB
+      - redis
+      - rails
+
+  knowledge-base:
+    build: ./services/knowledge-base
+    ports:
+      - "3101:3101"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - DB
+      - redis
+
+  sla-engine:
+    build: ./services/sla-engine
+    ports:
+      - "3102:3102"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - DB
+      - redis
+```
+
+### Implementation Roadmap
+
+#### Phase 1: AI Assistant (Week 1-2)
+```bash
+services/
+└── ai-assistant/
+    ├── package.json
+    ├── tsconfig.json
+    ├── src/
+    │   ├── index.ts          # Fastify server
+    │   ├── webhooks/         # Chatwoot webhook handlers
+    │   ├── rag/              # RAG pipeline
+    │   ├── inference/        # AI inference
+    │   └── api/              # REST endpoints
+    └── Dockerfile
+```
+
+#### Phase 2: Knowledge Base (Week 3-4)
+```bash
+services/
+└── knowledge-base/
+    ├── src/
+    │   ├── crawlers/         # Web crawlers
+    │   ├── processors/       # Document processors
+    │   ├── embeddings/       # Vector embeddings
+    │   └── sync/             # Sync jobs
+    └── Dockerfile
+```
+
+#### Phase 3: Production (Week 5-6)
+- Health checks và monitoring
+- Rate limiting và caching
+- Error handling và retry logic
+- Deployment với Docker Compose
+
+### Benefits của Hybrid Approach
+
+1. **Quick Time-to-Market**: Ship AI features trong 2 tuần
+2. **No Rails Conflicts**: Không động chạm Rails core
+3. **Modern Stack**: TypeScript, Fastify, BullMQ
+4. **Independent Scaling**: Scale từng service riêng
+5. **Gradual Migration**: Có thể migrate từ từ
 
 
 

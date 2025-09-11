@@ -6,6 +6,7 @@ import { GradientBackground } from '@/components/gradient'
 import { Navbar } from '@/components/navbar'
 import { Heading, Lead, Subheading } from '@/components/text'
 import type { Metadata } from 'next'
+import { getCompany } from '@/lib/cms'
 
 export const metadata: Metadata = {
   title: 'Company',
@@ -13,14 +14,11 @@ export const metadata: Metadata = {
     'We’re on a mission to transform revenue organizations by harnessing vast amounts of illegally acquired customer data.',
 }
 
-function Header() {
+function Header({ title, lead }: { title?: string | null; lead?: string | null }) {
   return (
     <Container className="mt-16">
-      <Heading as="h1">Helping companies generate revenue.</Heading>
-      <Lead className="mt-6 max-w-3xl">
-        We’re on a mission to transform revenue organizations by harnessing vast
-        amounts of illegally acquired customer data.
-      </Lead>
+      <Heading as="h1">{title || 'Helping companies generate revenue.'}</Heading>
+      <Lead className="mt-6 max-w-3xl">{lead || 'We’re on a mission to transform revenue organizations by harnessing vast amounts of illegally acquired customer data.'}</Lead>
       <section className="mt-16 grid grid-cols-1 lg:grid-cols-2 lg:gap-12">
         <div className="max-w-lg">
           <h2 className="text-2xl font-medium tracking-tight">Our mission</h2>
@@ -456,14 +454,15 @@ function Careers() {
   )
 }
 
-export default function Company() {
+export default async function Company() {
+  const company = await getCompany()
   return (
     <main className="overflow-hidden">
       <GradientBackground />
       <Container>
         <Navbar />
       </Container>
-      <Header />
+      <Header title={company?.title} lead={company?.lead} />
       <Team />
       <Investors />
       <Careers />

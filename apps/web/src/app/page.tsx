@@ -15,14 +15,16 @@ import { Testimonials } from '@/components/testimonials'
 import { Heading, Subheading } from '@/components/text'
 import { CTA } from '@/components/cta'
 import { FAQ } from '@/components/faq'
+import { getFaqs, getHomepage } from '@/lib/cms'
 import type { Metadata } from 'next'
+import type { Homepage } from '@/lib/cms'
 
 export const metadata: Metadata = {
   description:
     'Crove giúp bạn tạo quy trình AI tự động hoá cho doanh nghiệp – từ intake đến hành động.',
 }
 
-function Hero() {
+function Hero({ homepage }: { homepage: Homepage | null }) {
   return (
     <div className="relative">
       <Gradient className="absolute inset-2 bottom-0 rounded-4xl ring-1 ring-black/5 ring-inset" />
@@ -30,15 +32,18 @@ function Hero() {
         <Navbar />
         <div className="pt-16 pb-24 sm:pt-24 sm:pb-32 md:pt-32 md:pb-48">
           <h1 className="font-display text-6xl/[0.9] font-medium tracking-tight text-balance text-gray-950 sm:text-8xl/[0.8] md:text-9xl/[0.8]">
-            Build autonomous AI workflows.
+            {homepage?.heroTitle || 'Build autonomous AI workflows.'}
           </h1>
           <p className="mt-8 max-w-lg text-xl/7 font-medium text-gray-950/75 sm:text-2xl/8">
-            Crove giúp đội ngũ của bạn tự động hoá quy trình bằng tác nhân AI an toàn, có kiểm soát.
+            {homepage?.heroSubtitle ||
+              'Crove giúp đội ngũ của bạn tự động hoá quy trình bằng tác nhân AI an toàn, có kiểm soát.'}
           </p>
           <div className="mt-12 flex flex-col gap-x-6 gap-y-4 sm:flex-row">
-            <Button href="#">Bắt đầu miễn phí</Button>
-            <Button variant="secondary" href="/pricing">
-              Xem giá
+            <Button href={homepage?.primaryCtaHref || '#'}>
+              {homepage?.primaryCtaLabel || 'Bắt đầu miễn phí'}
+            </Button>
+            <Button variant="secondary" href={homepage?.secondaryCtaHref || '/pricing'}>
+              {homepage?.secondaryCtaLabel || 'Xem giá'}
             </Button>
           </div>
         </div>
@@ -179,10 +184,11 @@ function DarkBentoSection() {
   )
 }
 
-export default function Home() {
+export default async function Home() {
+  const [homepage, faqs] = await Promise.all([getHomepage(), getFaqs()])
   return (
     <div className="overflow-hidden">
-      <Hero />
+      <Hero homepage={homepage} />
       <main>
         <Container className="mt-10">
           <LogoCloud />
@@ -192,8 +198,19 @@ export default function Home() {
           <BentoSection />
         </div>
         <DarkBentoSection />
-        <FAQ />
-        <CTA />
+        <FAQ items={faqs.length ? faqs.map((f) => ({ q: f.question, a: f.answer })) : undefined} />
+        <CTA
+          heading={homepage?.ctaHeading || undefined}
+          description={homepage?.ctaDescription || undefined}
+          primary={{
+            label: homepage?.ctaPrimaryLabel || 'Bắt đầu miễn phí',
+            href: homepage?.ctaPrimaryHref || '#',
+          }}
+          secondary={{
+            label: homepage?.ctaSecondaryLabel || 'Xem giá',
+            href: homepage?.ctaSecondaryHref || '/pricing',
+          }}
+        />
       </main>
       <Testimonials />
       <Footer />

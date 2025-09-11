@@ -99,11 +99,88 @@ Follow conventional commits:
 
 ## Feature Development
 
+### Module Structure Patterns
+
+#### Pattern 1: Simple Modules (Single File)
+For small features, use single files in existing directories:
+```
+store/modules/croveFeature.js     # Vuex store
+api/croveFeature.js               # API client
+```
+
+#### Pattern 2: Complex/EE Modules (Folder Structure)
+For large features like AI, CRM, Analytics, use dedicated folders:
+```
+app/javascript/dashboard/
+├── api/
+│   └── module-name/           # API clients folder
+│       ├── resource1.js
+│       └── resource2.js
+├── store/
+│   └── module-name/           # Vuex store folder
+│       ├── actions.js
+│       └── mutations.js
+├── routes/dashboard/
+│   └── module-name/           # Routes & Views folder
+│       ├── components/
+│       └── module.routes.js
+└── components/
+    └── module-name/           # Shared components
+```
+
 ### Crove-Specific Features
 Located in dedicated directories:
 - Backend: `/app/services/crove/`, `/app/controllers/api/v1/accounts/crove_*`
-- Frontend: `/app/javascript/dashboard/modules/crove/`
+- Frontend: `/app/javascript/dashboard/modules/crove/` (deprecated)
 - Tests: `/spec/services/crove/`, `/spec/controllers/api/v1/accounts/crove_*`
+
+### Crove EE Modules Organization
+
+To avoid scattered files when implementing multiple EE replacement modules, use this structure:
+
+#### Option 1: Namespace by Module (RECOMMENDED)
+```
+app/javascript/dashboard/
+├── api/
+│   ├── crove-ai/              # AI Assistant module
+│   ├── crove-analytics/       # Analytics module
+│   └── crove-audit/           # Audit logs module
+├── store/
+│   ├── crove-ai/
+│   ├── crove-analytics/
+│   └── crove-audit/
+├── routes/dashboard/
+│   ├── crove-ai/
+│   ├── crove-analytics/
+│   └── crove-audit/
+└── components/
+    ├── crove-ai/
+    ├── crove-analytics/
+    └── crove-audit/
+```
+
+#### Option 2: Centralized Crove Directory
+```
+app/javascript/dashboard/crove/   # All Crove modules in one place
+├── ai/
+│   ├── api/
+│   ├── store/
+│   ├── routes/
+│   └── components/
+├── analytics/
+│   ├── api/
+│   ├── store/
+│   ├── routes/
+│   └── components/
+└── shared/                       # Shared utilities
+    ├── composables/
+    └── types/
+```
+
+**Recommendation**: Use Option 1 (namespace by module) as it follows Chatwoot's existing pattern (like Captain module) and makes it easier to:
+- Enable/disable features via feature flags
+- Remove modules if needed
+- Maintain consistency with Chatwoot structure
 
 ### Feature Flags
 Configured in `config/features.yml`:
