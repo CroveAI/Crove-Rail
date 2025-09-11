@@ -134,53 +134,62 @@ Located in dedicated directories:
 - Frontend: `/app/javascript/dashboard/modules/crove/` (deprecated)
 - Tests: `/spec/services/crove/`, `/spec/controllers/api/v1/accounts/crove_*`
 
-### Crove EE Modules Organization
+### Chatwoot Enterprise Architecture Pattern
 
-To avoid scattered files when implementing multiple EE replacement modules, use this structure:
+Chatwoot uses **2-tier architecture** for Enterprise features:
 
-#### Option 1: Namespace by Module (RECOMMENDED)
+#### Tier 1: Frontend (Dashboard) - Can be Open Source
 ```
 app/javascript/dashboard/
-├── api/
-│   ├── crove-ai/              # AI Assistant module
-│   ├── crove-analytics/       # Analytics module
-│   └── crove-audit/           # Audit logs module
-├── store/
-│   ├── crove-ai/
-│   ├── crove-analytics/
-│   └── crove-audit/
-├── routes/dashboard/
-│   ├── crove-ai/
-│   ├── crove-analytics/
-│   └── crove-audit/
-└── components/
-    ├── crove-ai/
-    ├── crove-analytics/
-    └── crove-audit/
+├── api/[module]/              # API clients (call backend)
+├── store/[module]/            # Vuex stores (UI state)  
+├── routes/dashboard/[module]/ # UI routes & Vue components
+└── components-next/[module]/  # Reusable Vue components
+```
+**Examples:** `captain/`, `helpcenter/`, `campaigns/`
+
+#### Tier 2: Backend (Enterprise) - Licensed
+```
+enterprise/
+├── app/models/[module]/       # Data models & business logic
+├── app/controllers/.../[module]/ # API endpoints
+├── app/services/[module]/     # Core business services  
+└── app/jobs/[module]/        # Background processing
+```
+**Examples:** `captain/`, `helpcenter/`, `sla/`
+
+### Crove EE Modules Organization
+
+**Follow Chatwoot's 2-tier pattern** for clean-room implementation:
+
+#### Frontend (Dashboard) - Use namespace with `crove-` prefix:
+```
+app/javascript/dashboard/
+├── api/crove-ai/              # AI Assistant API clients
+├── store/crove-ai/            # Vuex stores
+├── routes/dashboard/crove-ai/ # UI routes & components  
+└── components-next/crove-ai/  # Vue 3 components
 ```
 
-#### Option 2: Centralized Crove Directory
+#### Backend (Clean-room) - Separate from /enterprise:
 ```
-app/javascript/dashboard/crove/   # All Crove modules in one place
-├── ai/
-│   ├── api/
-│   ├── store/
-│   ├── routes/
-│   └── components/
-├── analytics/
-│   ├── api/
-│   ├── store/
-│   ├── routes/
-│   └── components/
-└── shared/                       # Shared utilities
-    ├── composables/
-    └── types/
+app/
+├── models/crove/              # Clean-room models
+│   ├── assistant.rb
+│   └── knowledge_base.rb
+├── controllers/api/v1/accounts/crove_*_controller.rb
+├── services/crove/            # Clean-room services
+│   └── ai_assistant_service.rb
+└── jobs/crove/               # Background jobs
+    └── generate_embedding_job.rb
 ```
 
-**Recommendation**: Use Option 1 (namespace by module) as it follows Chatwoot's existing pattern (like Captain module) and makes it easier to:
-- Enable/disable features via feature flags
-- Remove modules if needed
-- Maintain consistency with Chatwoot structure
+**Why this separation?**
+- ✅ Avoids license issues with `/enterprise` code
+- ✅ Frontend can be open-sourced later
+- ✅ Backend is clean-room implementation  
+- ✅ Follows established Chatwoot patterns
+- ✅ Feature flags work consistently
 
 ### Feature Flags
 Configured in `config/features.yml`:

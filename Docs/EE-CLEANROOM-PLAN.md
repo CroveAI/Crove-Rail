@@ -41,47 +41,93 @@ Tài liệu này tổng hợp tính năng Enterprise (EE) của Chatwoot ở m�
 - API: `/api/v1/accounts/:id/crove_features` với enable/disable endpoints
 - 7 features đã config trong `config/features.yml`
 
-### B. Module Structure Pattern
-Mỗi Crove EE module sẽ follow Chatwoot pattern với prefix `crove-`:
+### B. Chatwoot EE Architecture (Tham khảo)
+
+Chatwoot tách EE features thành 2 tiers:
+
+**Tier 1: Frontend (có thể open source)**
 ```
 app/javascript/dashboard/
-├── api/crove-[module]/         # API clients
-├── store/crove-[module]/       # Vuex modules  
-├── routes/dashboard/crove-[module]/  # Routes & Views
-└── components-next/crove-[module]/   # Vue 3 components
+├── api/captain/           # API clients
+├── store/captain/         # Vuex stores
+├── routes/dashboard/captain/  # UI components
+└── components-next/captain/   # Vue components
+```
 
+**Tier 2: Backend (Licensed)**  
+```
+enterprise/
+├── app/models/captain/        # Data models
+├── app/controllers/.../captain/  # API endpoints
+├── app/services/captain/      # Business logic
+└── app/jobs/captain/         # Background jobs
+```
+
+### C. Crove Clean-room Pattern
+Áp dụng 2-tier nhưng tách biệt hoàn toàn khỏi `/enterprise`:
+
+**Frontend (Dashboard)**
+```
+app/javascript/dashboard/
+├── api/crove-ai/              # API clients (call Crove backend)
+├── store/crove-ai/            # UI state management
+├── routes/dashboard/crove-ai/ # UI routes & components
+└── components-next/crove-ai/  # Vue 3 components
+```
+
+**Backend (Clean-room)**
+```
 app/
-├── controllers/api/v1/accounts/crove_[module]_controller.rb
-├── services/crove/[module]_service.rb
-└── models/crove/[module].rb
+├── models/crove/              # Clean-room models
+├── controllers/api/v1/accounts/crove_*_controller.rb
+├── services/crove/            # Clean-room services  
+└── jobs/crove/               # Background processing
 ```
 
-### C. AI Assistants module (thay Captain)
-Frontend structure:
+**Tại sao tách như vậy?**
+- Tránh vi phạm license của `/enterprise`
+- Frontend có thể open-source sau này
+- Backend hoàn toàn clean-room implementation
+
+### D. AI Assistants Implementation (Thay Captain)
+
+**Frontend (theo pattern Chatwoot)**
 ```
 app/javascript/dashboard/
-├── api/crove-ai/
-│   ├── assistants.ts
+├── api/crove-ai/              # API clients (tương tự api/captain/)
+│   ├── assistants.ts          # Call Crove clean-room APIs
 │   └── knowledge-base.ts
-├── store/crove-ai/
+├── store/crove-ai/            # Vuex stores (tương tự store/captain/)
 │   ├── assistants.js
 │   └── knowledge-base.js
-├── routes/dashboard/crove-ai/
+├── routes/dashboard/crove-ai/ # Routes (tương tự captain.routes.js)
 │   ├── assistants/
 │   └── crove-ai.routes.js
-└── components-next/crove-ai/
+└── components-next/crove-ai/  # Vue components
     ├── ChatInterface.vue
     └── KnowledgeBaseSync.vue
 ```
 
-Backend:
-- Models: `Crove::Assistant`, `Crove::KnowledgeBase`, `Crove::Document`
-- Controller: `CroveAssistantsController`
-- Service: `Crove::OpenAIService`, `Crove::EmbeddingService`
-- API endpoints:
-  - GET/POST /api/v1/accounts/:id/crove/assistants
-  - POST /api/v1/accounts/:id/crove/assistants/:id/generate
-  - GET/POST /api/v1/accounts/:id/crove/knowledge-bases
+**Backend (Clean-room, KHÔNG dùng enterprise/)**
+```
+app/
+├── models/crove/
+│   ├── assistant.rb           # Thay enterprise/app/models/captain/
+│   ├── knowledge_base.rb
+│   └── document.rb
+├── controllers/api/v1/accounts/
+│   └── crove_assistants_controller.rb  # Thay captain/assistants_controller.rb
+├── services/crove/
+│   ├── openai_service.rb      # Thay captain/llm/assistant_chat_service.rb
+│   └── embedding_service.rb
+└── jobs/crove/
+    └── generate_embeddings_job.rb
+```
+
+**API Endpoints (Clean-room)**
+- GET/POST `/api/v1/accounts/:id/crove/assistants`
+- POST `/api/v1/accounts/:id/crove/assistants/:id/generate`
+- GET/POST `/api/v1/accounts/:id/crove/knowledge-bases`
 
 ### C. SLA module
 - Bảng:

@@ -38,15 +38,29 @@ flowchart LR
 
 ### Cấu trúc Chatwoot/Rails (hiện có)
 - `app/controllers/api/v1`: API routes/webhooks, sẽ thêm `billing`, `organizations`
-- `app/javascript/dashboard`: Vue.js frontend với module structure:
-  - `api/crove-*/`: API clients cho từng module
-  - `store/crove-*/`: Vuex stores
-  - `routes/dashboard/crove-*/`: Routes và Views
-  - `components-next/crove-*/`: Vue 3 components
-- `app/models`: ActiveRecord models, sẽ thêm `Organization`, `Membership`, `Subscription`
-- `app/services`: Business logic, đã có `Crove::FeatureService` (✅ completed)
+- `app/javascript/dashboard`: Vue.js frontend với Chatwoot 2-tier pattern:
+  - `api/[module]/`: API clients (frontend tier)
+  - `store/[module]/`: Vuex stores (UI state)
+  - `routes/dashboard/[module]/`: Routes và Views
+  - `components-next/[module]/`: Vue 3 components
+- `enterprise/`: Licensed EE backend (models, controllers, services, jobs)
+- `app/models`: ActiveRecord models cho core + Crove clean-room
+- `app/services`: Business logic, có `Crove::FeatureService` (✅ completed)
 - `db/migrate`: Database migrations với PostgreSQL
 - `config/features.yml`: Feature flags configuration (✅ 7 features added)
+
+### Crove SaaS Architecture
+Áp dụng 2-tier pattern cho multi-tenancy:
+
+**Frontend Tier:**
+- Organization management UI trong dashboard
+- Billing/subscription components
+- Usage tracking widgets
+
+**Backend Tier:**
+- Multi-tenant models với RLS (Row-Level Security)
+- Stripe billing integration  
+- Usage metering services
 
 ---
 
